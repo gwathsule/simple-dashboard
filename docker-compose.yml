@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+    app:
+        build:
+            context: ./
+            dockerfile: Dockerfile
+        container_name: app-php
+        image: gwathsule/php
+        working_dir: /var/www
+        depends_on:
+            - mysql
+        env_file:
+            - .env
+        volumes:
+            - ./:/var/www
+        networks:
+            - app-php
+
+    nginx:
+        image: nginx:latest
+        container_name: app-nginx
+        ports:
+            - 8888:80
+        depends_on:
+            - app
+        volumes:
+            - ./:/var/www
+            - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+        networks:
+            - app-php
+
+    mysql:
+        container_name: products_mysql
+        image: mysql:latest
+        environment:
+            - MYSQL_ROOT_PASSWORD=123456
+            - MYSQL_DATABASE=dashboard
+        security_opt:
+            - seccomp:unconfined
+        ports:
+            - 3306:3306
+        networks:
+            - app-php
+        volumes:
+            - ./mysql/:/var/lib/mysql/
+
+networks:
+    app-php:
+        driver: bridge
